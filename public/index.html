@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AeroDB Reservation | Book Domestic &amp; International Flights</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <a href="index.html" class="brand">
+      <span class="logo-icon">✈️</span>
+      <span>AeroDB Reservation</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html" class="active">Home</a></li>
+      <li><a href="flights.html">Search Flights</a></li>
+      <li><a href="bookings.html">My Bookings</a></li>
+    </ul>
+  </nav>
+
+  <div class="container">
+
+    <!-- 1. AIRLINE-ORIENTED HERO SECTION -->
+    <header class="airline-hero">
+      <h1>Find Your Next Flight</h1>
+      <p>Search available flights and book your journey with ease.</p>
+    </header>
+
+    <!-- 2. MAIN COMPONENT: FLIGHT SEARCH BOX -->
+    <div class="home-search-card">
+      <form id="homeFlightSearchForm" onsubmit="handleFlightSearch(event)">
+        <!-- Error / Validation Warning -->
+        <div id="cityValidationAlert" class="alert alert-danger" style="display: none; margin-bottom: 1.25rem;">
+          Departure and destination cities cannot be the same. Please choose different cities.
+        </div>
+
+        <div class="search-grid-4">
+          <!-- FROM: Departure City -->
+          <div class="form-group">
+            <label for="home_departure_city" class="search-field-label">
+              <span>🛫</span> FROM
+            </label>
+            <select id="home_departure_city" class="form-control" onchange="checkCityCollision()" required>
+              <option value="">Select Origin City</option>
+              <option value="Karachi">Karachi</option>
+              <option value="Lahore">Lahore</option>
+              <option value="Islamabad">Islamabad</option>
+              <option value="Peshawar">Peshawar</option>
+              <option value="Quetta">Quetta</option>
+              <option value="Multan">Multan</option>
+              <option value="Faisalabad">Faisalabad</option>
+              <option value="Dubai">Dubai</option>
+              <option value="Doha">Doha</option>
+              <option value="Abu Dhabi">Abu Dhabi</option>
+              <option value="Jeddah">Jeddah</option>
+              <option value="Riyadh">Riyadh</option>
+              <option value="Muscat">Muscat</option>
+            </select>
+          </div>
+
+          <!-- TO: Destination City -->
+          <div class="form-group">
+            <label for="home_destination_city" class="search-field-label">
+              <span>🛬</span> TO
+            </label>
+            <select id="home_destination_city" class="form-control" onchange="checkCityCollision()" required>
+              <option value="">Select Destination City</option>
+              <option value="Lahore">Lahore</option>
+              <option value="Karachi">Karachi</option>
+              <option value="Islamabad">Islamabad</option>
+              <option value="Peshawar">Peshawar</option>
+              <option value="Quetta">Quetta</option>
+              <option value="Multan">Multan</option>
+              <option value="Faisalabad">Faisalabad</option>
+              <option value="Dubai">Dubai</option>
+              <option value="Doha">Doha</option>
+              <option value="Abu Dhabi">Abu Dhabi</option>
+              <option value="Jeddah">Jeddah</option>
+              <option value="Riyadh">Riyadh</option>
+              <option value="Muscat">Muscat</option>
+            </select>
+          </div>
+
+          <!-- DATE: Departure Date -->
+          <div class="form-group">
+            <label for="home_departure_date" class="search-field-label">
+              <span>📅</span> DEPARTURE DATE
+            </label>
+            <input type="date" id="home_departure_date" class="form-control" required>
+          </div>
+
+          <!-- PASSENGERS: Seat count -->
+          <div class="form-group">
+            <label for="home_passengers" class="search-field-label">
+              <span>👤</span> PASSENGERS
+            </label>
+            <select id="home_passengers" class="form-control">
+              <option value="1">1 Passenger</option>
+              <option value="2">2 Passengers</option>
+              <option value="3">3 Passengers</option>
+              <option value="4">4 Passengers</option>
+              <option value="5">5 Passengers</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: center;">
+          <button type="submit" id="searchSubmitBtn" class="btn btn-accent btn-lg" style="min-width: 260px; padding: 0.9rem 2rem; font-size: 1.05rem; box-shadow: var(--shadow-md);">
+            🔍 SEARCH FLIGHTS
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- 3. POPULAR FLIGHTS (REAL DATABASE DATA) -->
+    <section style="margin-bottom: 3.5rem;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 1.25rem;">
+        <div>
+          <h2 style="color: var(--primary); font-size: 1.75rem; font-weight: 800;">Popular Flights</h2>
+          <p style="color: var(--text-muted); font-size: 0.95rem;">Trending scheduled routes with instant seat availability.</p>
+        </div>
+        <a href="flights.html" class="btn btn-outline btn-sm">View All Flights &rarr;</a>
+      </div>
+
+      <div id="popularFlightsGrid" class="flights-grid">
+        <div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: var(--text-muted);">
+          Loading available flights from database...
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. PLAN YOUR JOURNEY (AIRLINE-STYLE FLOW) -->
+    <section style="margin-bottom: 3.5rem;">
+      <div style="text-align: center; margin-bottom: 2rem;">
+        <h2 style="color: var(--primary); font-size: 1.75rem; font-weight: 800;">Plan Your Journey</h2>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">Simple, reliable booking from departure to arrival.</p>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem;">
+        <div class="journey-step-card">
+          <div class="journey-step-number">1</div>
+          <h3 class="journey-step-title">Search Flights</h3>
+          <p class="journey-step-desc">Enter your departure city, destination, and preferred travel date.</p>
+        </div>
+
+        <div class="journey-step-card">
+          <div class="journey-step-number">2</div>
+          <h3 class="journey-step-title">Choose Flight</h3>
+          <p class="journey-step-desc">Compare fares, schedules, and airlines that best suit your itinerary.</p>
+        </div>
+
+        <div class="journey-step-card">
+          <div class="journey-step-number">3</div>
+          <h3 class="journey-step-title">Reserve Seats</h3>
+          <p class="journey-step-desc">Provide passenger details and confirm your ticket reservation instantly.</p>
+        </div>
+
+        <div class="journey-step-card">
+          <div class="journey-step-number">4</div>
+          <h3 class="journey-step-title">Manage Booking</h3>
+          <p class="journey-step-desc">View your reservation details or cancel bookings anytime online.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. USER-FRIENDLY INFORMATION -->
+    <section style="margin-bottom: 3.5rem;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+        <div class="feature-info-card">
+          <div class="feature-info-icon">✈️</div>
+          <h3 class="feature-info-title">Easy Flight Search</h3>
+          <p class="feature-info-desc">
+            Find flights by departure city, destination, price, and schedule. Filter and sort easily to find the optimal schedule for your trip.
+          </p>
+        </div>
+
+        <div class="feature-info-card">
+          <div class="feature-info-icon">🎟️</div>
+          <h3 class="feature-info-title">Simple Booking</h3>
+          <p class="feature-info-desc">
+            Select your preferred flight and reserve available seats in moments. Instant confirmation provides your official reference code.
+          </p>
+        </div>
+
+        <div class="feature-info-card">
+          <div class="feature-info-icon">📋</div>
+          <h3 class="feature-info-title">Manage Bookings</h3>
+          <p class="feature-info-desc">
+            View your existing reservations and cancel them when necessary. Reserved seats are automatically returned to the flight inventory.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. QUICK ACTION CTA BANNER -->
+    <section class="cta-banner">
+      <h3>Ready to Fly?</h3>
+      <p>Search over dozens of domestic and international routes or check your existing reservation.</p>
+      <div style="display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+        <a href="flights.html" class="btn btn-accent">Search All Flights</a>
+        <a href="bookings.html" class="btn btn-outline" style="color: #ffffff; border-color: rgba(255,255,255,0.4);">My Bookings</a>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <p><strong>AeroDB Reservation</strong> &bull; Simple, Reliable Airline Reservation Management</p>
+    <div style="margin-top: 0.5rem; display: flex; justify-content: center; gap: 1.5rem; flex-wrap: wrap;">
+      <a href="flights.html" style="color: #cbd5e1;">Search Flights</a>
+      <a href="bookings.html" style="color: #cbd5e1;">My Bookings</a>
+      <a href="/admin-login" style="color: #94a3b8; font-size: 0.8rem;">Staff Portal</a>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script>
+    // Initialize date picker and fetch popular flights on load
+    document.addEventListener('DOMContentLoaded', () => {
+      initDatePicker();
+      fetchPopularFlights();
+    });
+
+    // Default departure date to today / tomorrow
+    function initDatePicker() {
+      const dateInput = document.getElementById('home_departure_date');
+      if (dateInput) {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        dateInput.min = `${yyyy}-${mm}-${dd}`;
+        dateInput.value = `${yyyy}-${mm}-${dd}`;
+      }
+    }
+
+    // Validation: prevent selecting the same city for origin and destination
+    function checkCityCollision() {
+      const dep = document.getElementById('home_departure_city').value;
+      const dest = document.getElementById('home_destination_city').value;
+      const alertBox = document.getElementById('cityValidationAlert');
+      const submitBtn = document.getElementById('searchSubmitBtn');
+
+      if (dep && dest && dep.toLowerCase() === dest.toLowerCase()) {
+        alertBox.style.display = 'block';
+        submitBtn.disabled = true;
+        submitBtn.style.opacity = '0.6';
+        return false;
+      } else {
+        alertBox.style.display = 'none';
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = '1';
+        return true;
+      }
+    }
+
+    // Handle Search Form Submission
+    function handleFlightSearch(e) {
+      e.preventDefault();
+
+      if (!checkCityCollision()) {
+        return;
+      }
+
+      const dep = document.getElementById('home_departure_city').value;
+      const dest = document.getElementById('home_destination_city').value;
+      const date = document.getElementById('home_departure_date').value;
+      const passengers = document.getElementById('home_passengers').value;
+
+      const params = new URLSearchParams();
+      if (dep) params.append('departure_city', dep);
+      if (dest) params.append('destination_city', dest);
+      if (date) params.append('date', date);
+      if (passengers) params.append('passengers', passengers);
+
+      window.location.href = `flights.html?${params.toString()}`;
+    }
+
+    // Fetch real flights from MongoDB database via /api/flights
+    async function fetchPopularFlights() {
+      const grid = document.getElementById('popularFlightsGrid');
+
+      try {
+        const res = await fetch('/api/flights?status=Scheduled&sort_by=ticket_price&order=asc');
+        const json = await res.json();
+
+        if (!json.success || !json.data || json.data.length === 0) {
+          grid.innerHTML = `
+            <div style="grid-column: 1/-1; text-align: center; padding: 2.5rem; background: #ffffff; border-radius: 8px;">
+              <p style="color: var(--text-muted); font-size: 1rem;">No scheduled flights currently available.</p>
+            </div>
+          `;
+          return;
+        }
+
+        // Display up to 6 real flights
+        const flights = json.data.slice(0, 6);
+
+        grid.innerHTML = flights.map(flight => {
+          let seatBadgeClass = 'seats-available';
+          if (flight.available_seats === 0) seatBadgeClass = 'seats-full';
+          else if (flight.available_seats < 15) seatBadgeClass = 'seats-low';
+
+          return `
+            <div class="popular-flight-card">
+              <div>
+                <div class="popular-flight-top">
+                  <div>
+                    <div class="popular-flight-airline">${flight.airline}</div>
+                    <div class="popular-flight-num">${flight.flight_number}</div>
+                  </div>
+                  <span class="status-badge status-scheduled">${flight.status}</span>
+                </div>
+
+                <div class="popular-flight-route">
+                  <div>
+                    <div class="popular-route-city">${flight.departure_city}</div>
+                    <div class="popular-route-time">${flight.departure_time}</div>
+                  </div>
+                  <div style="color: var(--secondary); font-size: 1.1rem; font-weight: 700;">&rarr;</div>
+                  <div style="text-align: right;">
+                    <div class="popular-route-city">${flight.destination_city}</div>
+                    <div class="popular-route-time">${flight.arrival_time}</div>
+                  </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: baseline; margin: 1rem 0 0.5rem;">
+                  <div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">From</div>
+                    <div style="font-size: 1.35rem; font-weight: 800; color: var(--primary);">
+                      ${formatCurrency(flight.ticket_price)}
+                    </div>
+                  </div>
+                  <div style="text-align: right;">
+                    <span class="flight-seats ${seatBadgeClass}">
+                      ${flight.available_seats} seats available
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                <a href="flight-details.html?id=${flight._id}" class="btn btn-outline btn-sm" style="flex: 1;">
+                  View Flight
+                </a>
+                <a href="booking.html?flight_id=${flight._id}" class="btn btn-accent btn-sm" style="flex: 1;">
+                  Book Now
+                </a>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+      } catch (err) {
+        console.error('Failed to load popular flights:', err);
+        grid.innerHTML = `
+          <div style="grid-column: 1/-1; text-align: center; padding: 2rem; background: #ffffff; border-radius: 8px; color: var(--text-muted);">
+            Unable to load flights at this time. Please check server connection.
+          </div>
+        `;
+      }
+    }
+  </script>
+</body>
+</html>

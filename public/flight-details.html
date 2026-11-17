@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flight Details | Airline Reservation System</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <a href="index.html" class="brand">
+      <span class="logo-icon">✈️</span>
+      <span>AeroDB Reservation</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="flights.html">Search Flights</a></li>
+      <li><a href="bookings.html">My Bookings</a></li>
+    </ul>
+  </nav>
+
+  <div class="container" style="max-width: 800px;">
+    <div style="margin-bottom: 1.5rem;">
+      <a href="flights.html" class="btn btn-outline btn-sm">&larr; Back to Flights Search</a>
+    </div>
+
+    <div id="flightDetailsCard" class="card">
+      <div style="text-align: center; padding: 2rem;">Loading flight details from MongoDB...</div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p><strong>Airline Reservation Management System</strong> &bull; Advanced Database Systems Project</p>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const card = document.getElementById('flightDetailsCard');
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get('id');
+
+      if (!id) {
+        card.innerHTML = `<div class="alert alert-danger">No flight ID specified in URL.</div>`;
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/flights/${id}`);
+        const data = await res.json();
+
+        if (!data.success || !data.data) {
+          card.innerHTML = `<div class="alert alert-danger">${data.message || 'Flight not found.'}</div>`;
+          return;
+        }
+
+        const flight = data.data;
+        const statusClass = `status-${flight.status.toLowerCase()}`;
+        const isBookable = flight.status === 'Scheduled' && flight.available_seats > 0;
+        const bookedSeats = flight.total_seats - flight.available_seats;
+        const bookedPercent = Math.round((bookedSeats / flight.total_seats) * 100);
+
+        card.innerHTML = `
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.5rem;">
+            <div>
+              <h2 style="color: var(--primary); font-size: 1.75rem;">${flight.flight_number}</h2>
+              <div style="color: var(--text-muted); font-weight: 600;">${flight.airline}</div>
+            </div>
+            <span class="status-badge ${statusClass}" style="font-size: 0.9rem; padding: 0.4rem 1rem;">${flight.status}</span>
+          </div>
+
+          <div class="flight-route-display" style="padding: 1.5rem; margin-bottom: 2rem;">
+            <div class="route-stop">
+              <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Origin</div>
+              <div class="route-city" style="font-size: 1.5rem;">${flight.departure_city}</div>
+              <div class="route-time" style="font-size: 1rem; font-weight: 600; margin-top: 0.25rem;">${flight.departure_time}</div>
+            </div>
+            <div style="text-align: center;">
+              <div style="font-size: 2rem; color: var(--secondary);">✈️</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">NON-STOP</div>
+            </div>
+            <div class="route-stop">
+              <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Destination</div>
+              <div class="route-city" style="font-size: 1.5rem;">${flight.destination_city}</div>
+              <div class="route-time" style="font-size: 1rem; font-weight: 600; margin-top: 0.25rem;">${flight.arrival_time}</div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+            <div style="background: var(--bg-light); padding: 1.25rem; border-radius: var(--radius);">
+              <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Ticket Price (Per Seat)</div>
+              <div style="font-size: 1.85rem; font-weight: 800; color: var(--primary); margin-top: 0.25rem;">
+                ${formatCurrency(flight.ticket_price)}
+              </div>
+            </div>
+
+            <div style="background: var(--bg-light); padding: 1.25rem; border-radius: var(--radius);">
+              <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Seat Capacity</div>
+              <div style="font-size: 1.4rem; font-weight: 700; color: var(--text-dark); margin-top: 0.25rem;">
+                <span style="color: ${flight.available_seats > 0 ? 'var(--success)' : 'var(--danger)'};">
+                  ${flight.available_seats}
+                </span> / ${flight.total_seats} Available
+              </div>
+              <div style="width: 100%; background: #e2e8f0; height: 8px; border-radius: 4px; margin-top: 0.5rem; overflow: hidden;">
+                <div style="width: ${bookedPercent}%; background: var(--secondary); height: 100%;"></div>
+              </div>
+              <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem;">${bookedPercent}% booked</div>
+            </div>
+          </div>
+
+          <!-- MongoDB Document Information -->
+          <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: var(--radius); padding: 1rem; margin-bottom: 2rem; font-size: 0.85rem;">
+            <strong style="color: var(--primary);">MongoDB Document Schema:</strong>
+            <div style="margin-top: 0.4rem; font-family: monospace; color: #475569;">
+              _id: ObjectId("${flight._id}")<br>
+              Indexes: idx_flights_route (departure_city, destination_city), idx_flights_flight_number_unique
+            </div>
+          </div>
+
+          <div style="text-align: right;">
+            ${
+              isBookable
+                ? `<a href="booking.html?flight_id=${flight._id}" class="btn btn-accent btn-lg" style="width: 100%; padding: 0.85rem;">
+                     Proceed to Booking &rarr;
+                   </a>`
+                : `<button class="btn" disabled style="width: 100%; background: #e2e8f0; color: #94a3b8; cursor: not-allowed;">
+                     Booking Unavailable (${flight.status})
+                   </button>`
+            }
+          </div>
+        `;
+      } catch (err) {
+        card.innerHTML = `<div class="alert alert-danger">Failed to load flight details: ${err.message}</div>`;
+      }
+    });
+  </script>
+</body>
+</html>

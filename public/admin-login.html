@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Portal Login | AeroDB</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .login-container {
+      max-width: 440px;
+      margin: 4rem auto;
+      padding: 0 1rem;
+    }
+    .login-card {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      padding: 2.25rem 2rem;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border-color);
+    }
+    .login-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .login-header .shield-icon {
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .login-header h2 {
+      font-size: 1.5rem;
+      color: var(--primary);
+      font-weight: 800;
+    }
+    .login-header p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+  </style>
+</head>
+<body style="background-color: #f1f5f9;">
+
+  <!-- Minimal Brand Header -->
+  <nav class="navbar" style="justify-content: center;">
+    <a href="index.html" class="brand">
+      <span class="logo-icon">✈️</span>
+      <span>AeroDB Reservation</span>
+    </a>
+  </nav>
+
+  <div class="login-container">
+    <div style="margin-bottom: 1rem;">
+      <a href="index.html" style="font-size: 0.9rem; color: var(--text-muted);">&larr; Back to Passenger Website</a>
+    </div>
+
+    <div class="login-card">
+      <div class="login-header">
+        <div class="shield-icon">🔒</div>
+        <h2>Administrator Login</h2>
+        <p>Restricted access for flight operations and database analytics.</p>
+      </div>
+
+      <!-- Alert Box -->
+      <div id="loginAlert" style="display: none;"></div>
+
+      <form id="adminLoginForm" onsubmit="handleAdminLogin(event)">
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+          <label for="admin_username">Username</label>
+          <input type="text" id="admin_username" class="form-control" placeholder="Enter admin username" required autofocus>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 1.75rem;">
+          <label for="admin_password">Password</label>
+          <input type="password" id="admin_password" class="form-control" placeholder="Enter admin password" required>
+        </div>
+
+        <button type="submit" id="loginSubmitBtn" class="btn btn-primary" style="width: 100%; padding: 0.85rem; font-size: 1rem;">
+          LOGIN TO ADMIN PORTAL
+        </button>
+      </form>
+
+      <div style="margin-top: 1.75rem; padding-top: 1.25rem; border-top: 1px dashed var(--border-color); text-align: center; font-size: 0.8rem; color: var(--text-muted);">
+        Demo credentials configured via <code>.env</code> file.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Check if URL has error query (e.g. from redirect)
+    document.addEventListener('DOMContentLoaded', async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('error') === 'unauthorized') {
+        showError('Please sign in with administrator credentials to access that area.');
+      }
+
+      // Check if already authenticated
+      try {
+        const res = await fetch('/api/auth/verify');
+        const json = await res.json();
+        if (json.authenticated) {
+          window.location.href = '/admin';
+        }
+      } catch (e) {
+        // Not authenticated
+      }
+    });
+
+    function showError(msg) {
+      const alertDiv = document.getElementById('loginAlert');
+      alertDiv.className = 'alert alert-danger';
+      alertDiv.style.display = 'block';
+      alertDiv.textContent = msg;
+    }
+
+    async function handleAdminLogin(e) {
+      e.preventDefault();
+      const username = document.getElementById('admin_username').value.trim();
+      const password = document.getElementById('admin_password').value;
+      const submitBtn = document.getElementById('loginSubmitBtn');
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Verifying Credentials...';
+
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        const result = await response.json();
+
+        if (!result.success) {
+          showError(result.message || 'Invalid administrator credentials.');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'LOGIN TO ADMIN PORTAL';
+          return;
+        }
+
+        // Store token in localStorage for API requests
+        if (result.token) {
+          localStorage.setItem('admin_token', result.token);
+        }
+
+        // Redirect to protected admin panel
+        window.location.href = '/admin';
+      } catch (err) {
+        showError('Network error while connecting to authentication service.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'LOGIN TO ADMIN PORTAL';
+      }
+    }
+  </script>
+</body>
+</html>

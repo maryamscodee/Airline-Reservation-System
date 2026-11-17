@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book a Flight | Airline Reservation System</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <a href="index.html" class="brand">
+      <span class="logo-icon">✈️</span>
+      <span>AeroDB Reservation</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="flights.html">Search Flights</a></li>
+      <li><a href="bookings.html">My Bookings</a></li>
+    </ul>
+  </nav>
+
+  <div class="container" style="max-width: 850px;">
+    <div class="page-header">
+      <h1>Passenger Flight Reservation</h1>
+      <p>Reserve seats with guaranteed consistency backed by MongoDB multi-document ACID transactions.</p>
+    </div>
+
+    <!-- Alert Message Area -->
+    <div id="bookingAlertArea"></div>
+
+    <!-- Booking Confirmation Card (Shown after success) -->
+    <div id="confirmationCard" class="card" style="display: none; border-left: 5px solid var(--success);">
+      <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+        <span style="font-size: 2.5rem;">🎉</span>
+        <div>
+          <h2 style="color: var(--success); margin: 0;">Booking Confirmed!</h2>
+          <p style="color: var(--text-muted); margin: 0;">Your reservation has been atomically committed to MongoDB.</p>
+        </div>
+      </div>
+
+      <div style="background: var(--bg-light); padding: 1.25rem; border-radius: var(--radius); margin: 1.25rem 0;">
+        <div style="font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase;">Booking Reference Code</div>
+        <div id="confRefCode" style="font-size: 2rem; font-weight: 800; color: var(--primary); letter-spacing: 1px;">-</div>
+      </div>
+
+      <div id="confDetails" style="font-size: 0.95rem; line-height: 1.8; margin-bottom: 1.5rem;"></div>
+
+      <div style="display: flex; gap: 1rem;">
+        <a href="bookings.html" class="btn btn-primary">View in My Bookings</a>
+        <button type="button" class="btn btn-outline" onclick="resetBookingForm()">Book Another Flight</button>
+      </div>
+    </div>
+
+    <!-- Main Booking Form Card -->
+    <div id="bookingFormCard" class="card">
+      <form id="bookingForm">
+        <!-- Flight Selection -->
+        <h3 style="color: var(--primary); margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+          1. Select Flight
+        </h3>
+
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+          <label for="flight_select">Available Flight *</label>
+          <select id="flight_select" class="form-control" required>
+            <option value="">-- Choose an available flight --</option>
+          </select>
+        </div>
+
+        <!-- Selected Flight Summary Preview -->
+        <div id="flightSummaryBox" style="display: none; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: var(--radius); padding: 1rem; margin-bottom: 1.5rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <strong id="sumFlightNum" style="color: var(--primary); font-size: 1.1rem;">-</strong>
+              <div id="sumRoute" style="color: var(--text-muted); font-size: 0.9rem;">-</div>
+            </div>
+            <div style="text-align: right;">
+              <div id="sumPrice" style="font-weight: 700; color: var(--primary); font-size: 1.1rem;">-</div>
+              <div id="sumSeats" style="font-size: 0.85rem; color: var(--success); font-weight: 600;">-</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Passenger Information -->
+        <h3 style="color: var(--primary); margin-top: 1.5rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+          2. Passenger Contact Details
+        </h3>
+
+        <div class="form-grid" style="margin-bottom: 1.25rem;">
+          <div class="form-group">
+            <label for="passenger_name">Full Name *</label>
+            <input type="text" id="passenger_name" class="form-control" placeholder="e.g. Tariq Khan" required>
+          </div>
+
+          <div class="form-group">
+            <label for="passenger_email">Email Address *</label>
+            <input type="email" id="passenger_email" class="form-control" placeholder="tariq.khan@example.com" required>
+          </div>
+
+          <div class="form-group">
+            <label for="passenger_phone">Phone Number *</label>
+            <input type="tel" id="passenger_phone" class="form-control" placeholder="+92-300-1234567" required>
+          </div>
+        </div>
+
+        <!-- Seat Selection & Pricing Summary -->
+        <h3 style="color: var(--primary); margin-top: 1.5rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+          3. Seats &amp; Payment Calculation
+        </h3>
+
+        <div class="form-grid" style="align-items: center; margin-bottom: 1.5rem;">
+          <div class="form-group">
+            <label for="number_of_seats">Number of Seats to Book *</label>
+            <input type="number" id="number_of_seats" class="form-control" min="1" max="10" value="1" required>
+          </div>
+
+          <div class="form-group" style="background: var(--bg-light); padding: 0.85rem 1rem; border-radius: var(--radius); border: 1px solid var(--border-color);">
+            <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Total Calculated Fare</div>
+            <div id="totalPriceDisplay" style="font-size: 1.5rem; font-weight: 800; color: var(--primary);">
+              Rs. 0
+            </div>
+          </div>
+        </div>
+
+        <!-- Transaction Explanation Box -->
+        <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: var(--radius); padding: 0.85rem 1rem; margin-bottom: 1.5rem; font-size: 0.85rem; color: #1e40af;">
+          <strong>🔒 Database Transaction Notice:</strong> Upon clicking "Confirm &amp; Book", MongoDB executes an atomic transaction. It validates seat availability, decrements <code>available_seats</code> on the flight, and creates the booking document. If any step fails, all operations roll back automatically.
+        </div>
+
+        <button type="submit" id="submitBookingBtn" class="btn btn-accent btn-lg" style="width: 100%; padding: 0.85rem;">
+          Confirm &amp; Book Flight
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p><strong>Airline Reservation Management System</strong> &bull; Advanced Database Systems Project</p>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/booking.js"></script>
+</body>
+</html>

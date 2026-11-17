@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Airline Reservation System</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Navigation Bar (Restricted Admin Portal) -->
+  <nav class="navbar" style="background-color: #0b1f3a;">
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+      <a href="/admin" class="brand">
+        <span class="logo-icon">🛡️</span>
+        <span>AeroDB Admin Portal</span>
+      </a>
+      <span class="badge-tag admin" style="background: #e63946; font-size: 0.7rem;">RESTRICTED AREA</span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="/admin" class="active">Manage Flights &amp; Bookings</a></li>
+      <li><a href="/reports">DB Reports &amp; Analytics</a></li>
+      <li><a href="index.html" style="color: #94a3b8;" target="_blank">Passenger Site &nearr;</a></li>
+      <li><button type="button" class="btn btn-outline btn-sm" onclick="handleAdminLogout()" style="color: #ffffff; border-color: rgba(255,255,255,0.3); padding: 0.3rem 0.75rem;">Logout</button></li>
+    </ul>
+  </nav>
+
+  <div class="container">
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem;">
+      <div>
+        <h1>Database Administrator Dashboard</h1>
+        <p>Manage flights collection, modify flight schedules, track seat inventories, and manage passenger bookings.</p>
+      </div>
+      <div>
+        <button type="button" class="btn btn-accent" onclick="openAddFlightModal()">+ Add New Flight</button>
+      </div>
+    </div>
+
+    <!-- Alert Area -->
+    <div id="adminAlertArea"></div>
+
+    <!-- Admin Overview Metrics -->
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-label">Total Flights</div>
+        <div id="metricFlights" class="metric-value">-</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Total Bookings</div>
+        <div id="metricBookings" class="metric-value">-</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Confirmed Revenue</div>
+        <div id="metricRevenue" class="metric-value">-</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">ACID Transactions</div>
+        <div id="metricTxMode" style="font-size: 1.1rem; font-weight: 700; color: var(--success); margin-top: 0.5rem;">Active</div>
+      </div>
+    </div>
+
+    <!-- Tab Navigation & Academic Shortcuts -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border-color); flex-wrap: wrap; gap: 1rem;">
+      <div style="display: flex; gap: 1rem;">
+        <button type="button" id="tabFlightsBtn" class="btn btn-primary" onclick="switchAdminTab('flights')">Flights Management</button>
+        <button type="button" id="tabBookingsBtn" class="btn btn-outline" onclick="switchAdminTab('bookings')">Bookings Oversight</button>
+      </div>
+      <div>
+        <a href="/reports" class="btn btn-outline btn-sm" style="color: var(--secondary); font-weight: 700; border-color: var(--secondary);">
+          📊 Open DB Reports &amp; Query Performance &rarr;
+        </a>
+      </div>
+    </div>
+
+    <!-- SECTION 1: FLIGHTS MANAGEMENT -->
+    <div id="sectionFlights" class="card">
+      <div class="card-title">
+        <span>Flight Records</span>
+        <button type="button" class="btn btn-outline btn-sm" onclick="fetchAdminFlights()">Refresh Flights</button>
+      </div>
+
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Flight #</th>
+              <th>Airline</th>
+              <th>Route</th>
+              <th>Departure / Arrival</th>
+              <th>Price</th>
+              <th>Seats</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="adminFlightsTableBody">
+            <tr><td colspan="8" style="text-align: center; padding: 2rem;">Loading flights...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SECTION 2: BOOKINGS OVERSIGHT -->
+    <div id="sectionBookings" class="card" style="display: none;">
+      <div class="card-title">
+        <span>All Booking Records</span>
+        <div style="display: flex; gap: 0.5rem;">
+          <select id="adminBookingFilterStatus" class="form-control" style="width: auto; padding: 0.35rem 0.75rem;" onchange="fetchAdminBookings()">
+            <option value="All">All Bookings</option>
+            <option value="Confirmed">Confirmed</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+          <button type="button" class="btn btn-outline btn-sm" onclick="fetchAdminBookings()">Refresh</button>
+        </div>
+      </div>
+
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Reference</th>
+              <th>Passenger</th>
+              <th>Flight</th>
+              <th>Route</th>
+              <th>Seats</th>
+              <th>Total Amount</th>
+              <th>Date</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="adminBookingsTableBody">
+            <tr><td colspan="9" style="text-align: center; padding: 2rem;">Loading bookings...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD FLIGHT MODAL -->
+  <div id="addFlightModal" class="modal-overlay">
+    <div class="modal-content" style="max-width: 650px;">
+      <div class="modal-header">
+        <h3>Add New Flight Record</h3>
+        <button type="button" class="modal-close" onclick="closeAddFlightModal()">&times;</button>
+      </div>
+      <form id="addFlightForm" onsubmit="handleCreateFlight(event)">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="new_flight_number">Flight Number *</label>
+            <input type="text" id="new_flight_number" class="form-control" placeholder="PK786" required>
+          </div>
+          <div class="form-group">
+            <label for="new_airline">Airline *</label>
+            <input type="text" id="new_airline" class="form-control" placeholder="PIA" required>
+          </div>
+          <div class="form-group">
+            <label for="new_departure_city">Departure City *</label>
+            <input type="text" id="new_departure_city" class="form-control" placeholder="Karachi" required>
+          </div>
+          <div class="form-group">
+            <label for="new_destination_city">Destination City *</label>
+            <input type="text" id="new_destination_city" class="form-control" placeholder="Islamabad" required>
+          </div>
+          <div class="form-group">
+            <label for="new_departure_time">Departure Time (YYYY-MM-DD HH:MM) *</label>
+            <input type="text" id="new_departure_time" class="form-control" placeholder="2026-12-05 10:00" required>
+          </div>
+          <div class="form-group">
+            <label for="new_arrival_time">Arrival Time (YYYY-MM-DD HH:MM) *</label>
+            <input type="text" id="new_arrival_time" class="form-control" placeholder="2026-12-05 12:00" required>
+          </div>
+          <div class="form-group">
+            <label for="new_ticket_price">Ticket Price (PKR) *</label>
+            <input type="number" id="new_ticket_price" class="form-control" min="0" placeholder="25000" required>
+          </div>
+          <div class="form-group">
+            <label for="new_total_seats">Total Seats *</label>
+            <input type="number" id="new_total_seats" class="form-control" min="1" placeholder="180" required>
+          </div>
+          <div class="form-group">
+            <label for="new_status">Status</label>
+            <select id="new_status" class="form-control">
+              <option value="Scheduled">Scheduled</option>
+              <option value="Delayed">Delayed</option>
+            </select>
+          </div>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+          <button type="button" class="btn btn-outline" onclick="closeAddFlightModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Flight</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- EDIT FLIGHT MODAL -->
+  <div id="editFlightModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Update Flight Information</h3>
+        <button type="button" class="modal-close" onclick="closeEditFlightModal()">&times;</button>
+      </div>
+      <form id="editFlightForm" onsubmit="handleUpdateFlight(event)">
+        <input type="hidden" id="edit_flight_id">
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label>Flight Number</label>
+          <input type="text" id="edit_flight_number" class="form-control" disabled style="background: #f1f5f9;">
+        </div>
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label for="edit_status">Status</label>
+          <select id="edit_status" class="form-control">
+            <option value="Scheduled">Scheduled</option>
+            <option value="Delayed">Delayed</option>
+            <option value="Departed">Departed</option>
+            <option value="Cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label for="edit_ticket_price">Ticket Price (PKR)</label>
+          <input type="number" id="edit_ticket_price" class="form-control" min="0" required>
+        </div>
+        <div class="form-group" style="margin-bottom: 1.5rem;">
+          <label for="edit_total_seats">Total Seats</label>
+          <input type="number" id="edit_total_seats" class="form-control" min="1" required>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+          <button type="button" class="btn btn-outline" onclick="closeEditFlightModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p><strong>Airline Reservation Management System</strong> &bull; Advanced Database Systems Project</p>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

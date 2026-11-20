@@ -93,10 +93,3 @@ Represents passenger reservations with relational references to `passengers` and
 | **Backup & Recovery** | `database/backup_restore.md` | `mongodump`, `mongorestore` |
 
 ---
-
-
-## 8. Backup & Restore Demonstration
-
-See [`database/backup_restore.md`](database/backup_restore.md) for full commands:
-- Backup: `mongodump --db=airline_reservation_db --out=./backups`
-- Restore: `mongorestore --db=airline_reservation_db --drop ./backups/airline_reservation_db`
